@@ -8,6 +8,57 @@ import '../services/genealogy_file_service.dart';
 import 'add_edit_person_screen.dart';
 import 'person_detail_screen.dart';
 
+class _FamilyConnectionPainter extends CustomPainter {
+  const _FamilyConnectionPainter({
+    required this.row,
+    required this.previousRow,
+    required this.currentCenters,
+    required this.previousCenters,
+  });
+
+  final List<Person> row;
+  final List<Person> previousRow;
+  final List<Offset> currentCenters;
+  final List<Offset> previousCenters;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (previousRow.isEmpty) return;
+
+    final paint = Paint()
+      ..color = Colors.indigo.withOpacity(0.55)
+      ..strokeWidth = 2.0
+      ..style = PaintingStyle.stroke;
+
+    for (var i = 0; i < row.length; i++) {
+      final person = row[i];
+      final parentId = person.fatherId ?? person.motherId;
+      if (parentId == null) continue;
+
+      final parentIndex = previousRow.indexWhere((p) => p.id == parentId);
+      if (parentIndex < 0) continue;
+
+      final parentCenter = previousCenters[parentIndex];
+      final childCenter = currentCenters[i];
+      final midY = 82.0;
+
+      final parentAnchor = Offset(parentCenter.dx, size.height - 10);
+      final childAnchor = Offset(childCenter.dx, 10);
+
+      canvas.drawLine(parentAnchor, Offset(parentCenter.dx, midY), paint);
+      canvas.drawLine(Offset(parentCenter.dx, midY), Offset(childCenter.dx, midY), paint);
+      canvas.drawLine(Offset(childCenter.dx, midY), childAnchor, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _FamilyConnectionPainter oldDelegate) =>
+      oldDelegate.row != row ||
+      oldDelegate.previousRow != previousRow ||
+      oldDelegate.currentCenters != currentCenters ||
+      oldDelegate.previousCenters != previousCenters;
+}
+
 class GenealogyHomeScreen extends StatefulWidget {
   const GenealogyHomeScreen({
     super.key,
@@ -490,57 +541,6 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
         ),
       ),
     );
-  }
-
-  class _FamilyConnectionPainter extends CustomPainter {
-    const _FamilyConnectionPainter({
-      required this.row,
-      required this.previousRow,
-      required this.currentCenters,
-      required this.previousCenters,
-    });
-
-    final List<Person> row;
-    final List<Person> previousRow;
-    final List<Offset> currentCenters;
-    final List<Offset> previousCenters;
-
-    @override
-    void paint(Canvas canvas, Size size) {
-      if (previousRow.isEmpty) return;
-
-      final paint = Paint()
-        ..color = Colors.indigo.withOpacity(0.55)
-        ..strokeWidth = 2.0
-        ..style = PaintingStyle.stroke;
-
-      for (var i = 0; i < row.length; i++) {
-        final person = row[i];
-        final parentId = person.fatherId ?? person.motherId;
-        if (parentId == null) continue;
-
-        final parentIndex = previousRow.indexWhere((p) => p.id == parentId);
-        if (parentIndex < 0) continue;
-
-        final parentCenter = previousCenters[parentIndex];
-        final childCenter = currentCenters[i];
-        final midY = 82.0;
-
-        final parentAnchor = Offset(parentCenter.dx, size.height - 10);
-        final childAnchor = Offset(childCenter.dx, 10);
-
-        canvas.drawLine(parentAnchor, Offset(parentCenter.dx, midY), paint);
-        canvas.drawLine(Offset(parentCenter.dx, midY), Offset(childCenter.dx, midY), paint);
-        canvas.drawLine(Offset(childCenter.dx, midY), childAnchor, paint);
-      }
-    }
-
-    @override
-    bool shouldRepaint(covariant _FamilyConnectionPainter oldDelegate) =>
-        oldDelegate.row != row ||
-        oldDelegate.previousRow != previousRow ||
-        oldDelegate.currentCenters != currentCenters ||
-        oldDelegate.previousCenters != previousCenters;
   }
 
   @override
