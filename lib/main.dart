@@ -474,7 +474,7 @@ class _GenealogyAppState extends State<GenealogyApp> {
                 Expanded(child: Container(color: Colors.grey.shade100, child: _buildTree())),
               ]),
         floatingActionButton: FloatingActionButton.extended(
-          onPressed: _loading ? null : _addPerson,
+          onPressed:_addPerson,
           icon: const Icon(Icons.add),
           label: const Text('Thêm'),
         ),
