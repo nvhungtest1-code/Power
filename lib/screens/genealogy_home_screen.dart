@@ -570,10 +570,11 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
   List<Offset> _rowCenters(List<Person> row, double availableWidth) {
     if (row.isEmpty) return const <Offset>[];
 
+    final safeWidth = availableWidth.isFinite ? availableWidth : 1200.0;
     const cardWidth = 190.0;
     const gap = 24.0;
     final totalWidth = row.length * cardWidth + (row.length - 1) * gap;
-    final startX = (availableWidth - totalWidth) / 2;
+    final startX = (safeWidth - totalWidth) / 2;
 
     return List.generate(row.length, (index) {
       final x = startX + index * (cardWidth + gap) + (cardWidth / 2);
@@ -632,13 +633,17 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
         maxScale: 2.0,
         child: LayoutBuilder(
           builder: (context, constraints) {
+            final safeWidth = constraints.maxWidth.isFinite
+                ? constraints.maxWidth
+                : MediaQuery.sizeOf(context).width;
+
             const rowHeight = 210.0;
             final rowCenters = <List<Offset>>[];
             final rowTopOffsets = <double>[];
             double currentTop = 24;
 
             for (final row in rows) {
-              rowCenters.add(_rowCenters(row, constraints.maxWidth));
+              rowCenters.add(_rowCenters(row, safeWidth));
               rowTopOffsets.add(currentTop);
               currentTop += rowHeight;
             }
@@ -646,7 +651,7 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
             final totalHeight = currentTop + 24;
 
             return SizedBox(
-              width: constraints.maxWidth,
+              width: safeWidth,
               height: totalHeight,
               child: Stack(
                 children: [
