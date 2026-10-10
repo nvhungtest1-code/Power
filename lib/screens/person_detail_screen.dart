@@ -11,6 +11,7 @@ class PersonDetailScreen extends StatelessWidget {
     required this.onEditPerson,
     required this.onDeletePerson,
     required this.onAddChild,
+    required this.onAddParent,
     required this.onAddSpouse,
   });
 
