@@ -87,7 +87,7 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
     setState(() {
       people.add(person);
       for (final spouseId in person.spouseIds) {
-        final spouse = people.where((p) => p.id == spouseId).firstOrNull;
+        final spouse = _personById(spouseId);
         if (spouse != null && !spouse.spouseIds.contains(person.id)) {
           spouse.spouseIds.add(person.id);
         }
@@ -104,10 +104,14 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
   }
 
   Future<void> _addChildPerson(Person parent, {required String gender}) async {
-    final spouse = parent.spouseIds
-        .map((id) => people.firstWhereOrNull((person) => person.id == id))
-        .whereType<Person>()
-        .firstOrNull;
+    Person? spouse;
+    for (final spouseId in parent.spouseIds) {
+      final candidate = _personById(spouseId);
+      if (candidate != null) {
+        spouse = candidate;
+        break;
+      }
+    }
 
     final defaultFatherId = parent.gender == 'Nữ' || parent.gender == 'female'
         ? spouse?.id
@@ -198,6 +202,14 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
     }
   }
 
+  Person? _personById(int? id) {
+    if (id == null) return null;
+    for (final person in people) {
+      if (person.id == id) return person;
+    }
+    return null;
+  }
+
   int? _treeParentId(Person person) => person.fatherId ?? person.motherId;
 
   List<Person> _childrenOf(int parentId) =>
@@ -252,7 +264,7 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
         if (other.id != person.id) other.spouseIds.remove(person.id);
       }
       for (final spouseId in updated.spouseIds) {
-        final spouse = people.where((p) => p.id == spouseId).firstOrNull;
+        final spouse = _personById(spouseId);
         if (spouse != null && !spouse.spouseIds.contains(person.id)) {
           spouse.spouseIds.add(person.id);
         }

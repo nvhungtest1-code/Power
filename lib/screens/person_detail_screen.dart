@@ -22,11 +22,19 @@ class PersonDetailScreen extends StatelessWidget {
   final Future<void> Function(Person person, {required String gender}) onAddChild;
   final Future<void> Function(Person person) onAddSpouse;
 
-  Person? _father() => people.firstWhereOrNull((p) => p.id == person.fatherId);
-  Person? _mother() => people.firstWhereOrNull((p) => p.id == person.motherId);
+  Person? _personById(int? id) {
+    if (id == null) return null;
+    for (final member in people) {
+      if (member.id == id) return member;
+    }
+    return null;
+  }
+
+  Person? _father() => _personById(person.fatherId);
+  Person? _mother() => _personById(person.motherId);
 
   List<Person> _spouses() => person.spouseIds
-      .map((id) => people.firstWhereOrNull((p) => p.id == id))
+      .map(_personById)
       .whereType<Person>()
       .toList();
 
