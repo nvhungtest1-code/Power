@@ -10,53 +10,58 @@ import 'person_detail_screen.dart';
 
 class _FamilyConnectionPainter extends CustomPainter {
   const _FamilyConnectionPainter({
-    required this.row,
-    required this.previousRow,
-    required this.currentCenters,
-    required this.previousCenters,
+    required this.rows,
+    required this.rowCenters,
+    required this.rowTopOffsets,
   });
 
-  final List<Person> row;
-  final List<Person> previousRow;
-  final List<Offset> currentCenters;
-  final List<Offset> previousCenters;
+  final List<List<Person>> rows;
+  final List<List<Offset>> rowCenters;
+  final List<double> rowTopOffsets;
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (previousRow.isEmpty) return;
+    if (rows.length < 2) return;
 
     final paint = Paint()
       ..color = Colors.indigo.withOpacity(0.55)
       ..strokeWidth = 2.0
       ..style = PaintingStyle.stroke;
 
-    for (var i = 0; i < row.length; i++) {
-      final person = row[i];
-      final parentId = person.fatherId ?? person.motherId;
-      if (parentId == null) continue;
+    for (var rowIndex = 1; rowIndex < rows.length; rowIndex++) {
+      final currentRow = rows[rowIndex];
+      final previousRow = rows[rowIndex - 1];
+      final currentCenters = rowCenters[rowIndex];
+      final previousCenters = rowCenters[rowIndex - 1];
+      final currentTop = rowTopOffsets[rowIndex];
+      final previousTop = rowTopOffsets[rowIndex - 1];
 
-      final parentIndex = previousRow.indexWhere((p) => p.id == parentId);
-      if (parentIndex < 0) continue;
+      for (var i = 0; i < currentRow.length; i++) {
+        final child = currentRow[i];
+        final parentId = child.fatherId ?? child.motherId;
+        if (parentId == null) continue;
 
-      final parentCenter = previousCenters[parentIndex];
-      final childCenter = currentCenters[i];
-      final midY = 82.0;
+        final parentIndex = previousRow.indexWhere((p) => p.id == parentId);
+        if (parentIndex < 0) continue;
 
-      final parentAnchor = Offset(parentCenter.dx, size.height - 10);
-      final childAnchor = Offset(childCenter.dx, 10);
+        final parentCenter = previousCenters[parentIndex];
+        final childCenter = currentCenters[i];
+        final parentAnchor = Offset(parentCenter.dx, previousTop + 150);
+        final childAnchor = Offset(childCenter.dx, currentTop + 10);
+        final midY = (parentAnchor.dy + childAnchor.dy) / 2;
 
-      canvas.drawLine(parentAnchor, Offset(parentCenter.dx, midY), paint);
-      canvas.drawLine(Offset(parentCenter.dx, midY), Offset(childCenter.dx, midY), paint);
-      canvas.drawLine(Offset(childCenter.dx, midY), childAnchor, paint);
+        canvas.drawLine(parentAnchor, Offset(parentCenter.dx, midY), paint);
+        canvas.drawLine(Offset(parentCenter.dx, midY), Offset(childCenter.dx, midY), paint);
+        canvas.drawLine(Offset(childCenter.dx, midY), childAnchor, paint);
+      }
     }
   }
 
   @override
   bool shouldRepaint(covariant _FamilyConnectionPainter oldDelegate) =>
-      oldDelegate.row != row ||
-      oldDelegate.previousRow != previousRow ||
-      oldDelegate.currentCenters != currentCenters ||
-      oldDelegate.previousCenters != previousCenters;
+      oldDelegate.rows != rows ||
+      oldDelegate.rowCenters != rowCenters ||
+      oldDelegate.rowTopOffsets != rowTopOffsets;
 }
 
 class GenealogyHomeScreen extends StatefulWidget {
@@ -470,7 +475,7 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
 
     return List.generate(row.length, (index) {
       final x = startX + index * (cardWidth + gap) + (cardWidth / 2);
-      return Offset(x, 100);
+      return Offset(x, 0);
     });
   }
 
@@ -487,58 +492,59 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
       boundaryMargin: const EdgeInsets.all(100),
       minScale: 0.25,
       maxScale: 2.5,
-      child: Padding(
-        padding: const EdgeInsets.all(40),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            for (int rowIndex = 0; rowIndex < rows.length; rowIndex++) ...[
-              Padding(
-                padding: const EdgeInsets.only(bottom: 28),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final row = rows[rowIndex];
-                    final currentCenters = _rowCenters(row, constraints.maxWidth);
-                    final previousRow = rowIndex == 0 ? <Person>[] : rows[rowIndex - 1];
-                    final previousCenters = rowIndex == 0
-                        ? <Offset>[]
-                        : _rowCenters(previousRow, constraints.maxWidth);
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const rowHeight = 170.0;
+          final rowCenters = <List<Offset>>[];
+          final rowTopOffsets = <double>[];
+          double currentTop = 20;
 
-                    return SizedBox(
-                      height: 170,
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: CustomPaint(
-                              painter: _FamilyConnectionPainter(
-                                row: row,
-                                previousRow: previousRow,
-                                currentCenters: currentCenters,
-                                previousCenters: previousCenters,
-                              ),
-                            ),
-                          ),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: row
-                                .map(
-                                  (person) => Padding(
-                                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                                    child: _personCard(person),
-                                  ),
-                                )
-                                .toList(),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+          for (final row in rows) {
+            rowCenters.add(_rowCenters(row, constraints.maxWidth));
+            rowTopOffsets.add(currentTop);
+            currentTop += rowHeight;
+          }
+
+          final totalHeight = currentTop + 20;
+
+          return SizedBox(
+            width: constraints.maxWidth,
+            height: totalHeight,
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: CustomPaint(
+                    painter: _FamilyConnectionPainter(
+                      rows: rows,
+                      rowCenters: rowCenters,
+                      rowTopOffsets: rowTopOffsets,
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ],
-        ),
+                ...List.generate(rows.length, (rowIndex) {
+                  final row = rows[rowIndex];
+                  return Positioned(
+                    top: rowTopOffsets[rowIndex],
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: row
+                          .map(
+                            (person) => Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: _personCard(person),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
