@@ -210,6 +210,44 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
     return null;
   }
 
+  int _generationOf(Person person, Map<int, int> cache) {
+    if (cache.containsKey(person.id)) return cache[person.id]!;
+
+    final parents = [person.fatherId, person.motherId]
+        .whereType<int>()
+        .map((parentId) => _personById(parentId))
+        .whereType<Person>()
+        .toList();
+
+    if (parents.isEmpty) {
+      cache[person.id] = 0;
+      return 0;
+    }
+
+    final parentGeneration = parents
+        .map((parent) => _generationOf(parent, cache))
+        .reduce((a, b) => a > b ? a : b);
+    cache[person.id] = parentGeneration + 1;
+    return cache[person.id]!;
+  }
+
+  List<List<Person>> _generationRows() {
+    final map = <int, List<Person>>{};
+    final cache = <int, int>{};
+
+    for (final person in people) {
+      final generation = _generationOf(person, cache);
+      map.putIfAbsent(generation, () => []).add(person);
+    }
+
+    final rows = map.keys.toList()..sort();
+    return rows.map((generation) {
+      final row = List<Person>.from(map[generation]!);
+      row.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      return row;
+    }).toList();
+  }
+
   int? _treeParentId(Person person) => person.fatherId ?? person.motherId;
 
   List<Person> _childrenOf(int parentId) =>
@@ -281,80 +319,69 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
   }
 
   Widget _personCard(Person person) {
-    final children = _childrenOf(person.id);
     final isMale = person.gender == 'Nam' || person.gender == 'male';
 
-    return Column(
-      children: [
-        InkWell(
-          onTap: () => _openDetailScreen(person),
+    return InkWell(
+      onTap: () => _openDetailScreen(person),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        width: 190,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          child: Container(
-            width: 190,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isMale ? Colors.blue : Colors.pink,
-                width: 2,
-              ),
-              boxShadow: const [
-                BoxShadow(
-                  blurRadius: 6,
-                  color: Color(0x22000000),
-                  offset: Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                CircleAvatar(
-                  backgroundColor:
-                      isMale ? Colors.blue.shade100 : Colors.pink.shade100,
-                  child: Icon(
-                    isMale ? Icons.man : Icons.woman,
-                    color: isMale ? Colors.blue : Colors.pink,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  person.name,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 4),
-                Text(person.gender, style: TextStyle(color: Colors.grey.shade600)),
-                if (person.birthDate != null || person.deathDate != null)
-                  Text(
-                    '${person.birthDate?.year ?? '?'} – ${person.deathDate?.year ?? (person.birthDate == null ? '?' : 'nay')}',
-                  ),
-              ],
-            ),
+          border: Border.all(
+            color: isMale ? Colors.blue : Colors.pink,
+            width: 2,
           ),
+          boxShadow: const [
+            BoxShadow(
+              blurRadius: 6,
+              color: Color(0x22000000),
+              offset: Offset(0, 3),
+            ),
+          ],
         ),
-        if (children.isNotEmpty) ...[
-          Container(width: 2, height: 28, color: Colors.grey),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: children
-                .map(
-                  (child) => Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: _personCard(child),
-                  ),
-                )
-                .toList(),
-          ),
-        ],
-      ],
+        child: Column(
+          children: [
+            CircleAvatar(
+              backgroundColor: isMale ? Colors.blue.shade100 : Colors.pink.shade100,
+              child: Icon(
+                isMale ? Icons.man : Icons.woman,
+                color: isMale ? Colors.blue : Colors.pink,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              person.name,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(person.gender, style: TextStyle(color: Colors.grey.shade600)),
+            if (person.description.trim().isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                person.description,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+              ),
+            ],
+            if (person.birthDate != null || person.deathDate != null)
+              Text(
+                '${person.birthDate?.year ?? '?'} – ${person.deathDate?.year ?? (person.birthDate == null ? '?' : 'nay')}',
+              ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildTree() {
-    final roots = people.where((p) => _treeParentId(p) == null).toList();
-    if (roots.isEmpty) {
+    final rows = _generationRows();
+    if (rows.isEmpty) {
       return const Center(
         child: Text('Chưa có dữ liệu gia phả. Nhấn “Thêm thành viên” để bắt đầu.'),
       );
@@ -367,16 +394,39 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
       maxScale: 2.5,
       child: Padding(
         padding: const EdgeInsets.all(40),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: roots
-              .map(
-                (p) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: _personCard(p),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            for (int rowIndex = 0; rowIndex < rows.length; rowIndex++) ...[
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20),
+                child: Column(
+                  children: [
+                    Text(
+                      'Dòng ${rowIndex + 1}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.indigo,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: rows[rowIndex]
+                          .map(
+                            (person) => Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: _personCard(person),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
                 ),
-              )
-              .toList(),
+              ),
+            ],
+          ],
         ),
       ),
     );

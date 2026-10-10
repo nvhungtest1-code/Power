@@ -2,6 +2,7 @@ class Person {
   final int id;
   String name;
   String gender;
+  String description;
   int? fatherId;
   int? motherId;
   List<int> spouseIds;
@@ -15,6 +16,7 @@ class Person {
     required this.id,
     required this.name,
     required this.gender,
+    this.description = '',
     int? parentId,
     this.fatherId,
     this.motherId,
@@ -29,6 +31,7 @@ class Person {
         'id': id,
         'name': name,
         'gender': gender,
+        'description': description,
         'fatherId': fatherId,
         'motherId': motherId,
         'spouseIds': spouseIds,
@@ -40,6 +43,7 @@ class Person {
         id: (json['id'] as num).toInt(),
         name: json['name'] as String? ?? json['fullName'] as String? ?? '',
         gender: json['gender'] as String? ?? 'unknown',
+        description: json['description'] as String? ?? '',
         fatherId: (json['fatherId'] ?? json['parentId']) is num
             ? ((json['fatherId'] ?? json['parentId']) as num).toInt()
             : null,

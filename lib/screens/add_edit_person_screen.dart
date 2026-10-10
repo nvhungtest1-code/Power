@@ -31,6 +31,7 @@ class AddPersonScreen extends StatefulWidget {
 class _AddPersonScreenState extends State<AddPersonScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _descriptionController = TextEditingController();
   String _gender = 'Nam';
   int? _fatherId;
   int? _motherId;
@@ -47,6 +48,7 @@ class _AddPersonScreenState extends State<AddPersonScreen> {
     final person = widget.existingPerson;
     if (person != null) {
       _nameController.text = person.name;
+      _descriptionController.text = person.description;
       _gender = person.gender;
       _fatherId = person.fatherId ?? widget.defaultFatherId;
       _motherId = person.motherId ?? widget.defaultMotherId;
@@ -66,6 +68,7 @@ class _AddPersonScreenState extends State<AddPersonScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -97,6 +100,7 @@ class _AddPersonScreenState extends State<AddPersonScreen> {
       id: widget.existingPerson?.id ?? widget.nextId,
       name: _nameController.text.trim(),
       gender: _gender,
+      description: _descriptionController.text.trim(),
       fatherId: _fatherId,
       motherId: _motherId,
       spouseIds: _spouseIds.toList(),
@@ -187,6 +191,18 @@ class _AddPersonScreenState extends State<AddPersonScreen> {
                         value == null || value.trim().isEmpty
                             ? 'Vui lòng nhập họ và tên.'
                             : null,
+                  ),
+                  const SizedBox(height: 14),
+                  TextFormField(
+                    controller: _descriptionController,
+                    minLines: 2,
+                    maxLines: 5,
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: const InputDecoration(
+                      labelText: 'Mô tả / Ghi chú',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.notes),
+                    ),
                   ),
                   const SizedBox(height: 14),
                   DropdownButtonFormField<String>(

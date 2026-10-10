@@ -127,6 +127,12 @@ class PersonDetailScreen extends StatelessWidget {
               const SizedBox(height: 12),
               _InfoRow(label: 'Giới tính', value: person.gender),
               _InfoRow(
+                label: 'Mô tả',
+                value: person.description.trim().isEmpty
+                    ? 'Chưa có mô tả'
+                    : person.description,
+              ),
+              _InfoRow(
                 label: 'Ngày sinh',
                 value: person.birthDate == null
                     ? 'Chưa có'
