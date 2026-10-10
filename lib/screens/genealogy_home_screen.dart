@@ -501,7 +501,7 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
                     final currentCenters = _rowCenters(row, constraints.maxWidth);
                     final previousRow = rowIndex == 0 ? <Person>[] : rows[rowIndex - 1];
                     final previousCenters = rowIndex == 0
-                        ? const []
+                        ? <Offset>[]
                         : _rowCenters(previousRow, constraints.maxWidth);
 
                     return SizedBox(
