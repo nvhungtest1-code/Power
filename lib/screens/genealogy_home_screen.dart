@@ -404,62 +404,164 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
     }
   }
 
-  Widget _personCard(Person person) {
-    final isMale = person.gender == 'Nam' || person.gender == 'male';
-
-    return InkWell(
-      onTap: () => _openDetailScreen(person),
-      borderRadius: BorderRadius.circular(12),
+  Widget _summaryCard({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Expanded(
       child: Container(
-        width: 190,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isMale ? Colors.blue : Colors.pink,
-            width: 2,
-          ),
-          boxShadow: const [
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.18)),
+          boxShadow: [
             BoxShadow(
-              blurRadius: 6,
-              color: Color(0x22000000),
-              offset: Offset(0, 3),
+              color: color.withOpacity(0.12),
+              offset: const Offset(0, 6),
+              blurRadius: 18,
             ),
           ],
         ),
-        child: Column(
+        child: Row(
           children: [
             CircleAvatar(
-              backgroundColor: isMale ? Colors.blue.shade100 : Colors.pink.shade100,
-              child: Icon(
-                isMale ? Icons.man : Icons.woman,
-                color: isMale ? Colors.blue : Colors.pink,
+              radius: 18,
+              backgroundColor: color.withOpacity(0.12),
+              child: Icon(icon, color: color),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 10),
-            Text(
-              person.name,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _personCard(Person person) {
+    final isMale = person.gender == 'Nam' || person.gender == 'male';
+    final accentColor = isMale ? Colors.blue : Colors.pink;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _openDetailScreen(person),
+        borderRadius: BorderRadius.circular(18),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 180,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Theme.of(context).colorScheme.surface,
+                (isMale ? Colors.blue : Colors.pink).withOpacity(0.08),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(person.gender, style: TextStyle(color: Colors.grey.shade600)),
-            if (person.description.trim().isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(
-                person.description,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 11, color: Colors.grey.shade700),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: accentColor.withOpacity(0.38),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                blurRadius: 14,
+                color: accentColor.withOpacity(0.12),
+                offset: const Offset(0, 6),
               ),
             ],
-            if (person.birthDate != null || person.deathDate != null)
-              Text(
-                '${person.birthDate?.year ?? '?'} – ${person.deathDate?.year ?? (person.birthDate == null ? '?' : 'nay')}',
+          ),
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: accentColor.withOpacity(0.12),
+                child: Icon(
+                  isMale ? Icons.man_rounded : Icons.woman_rounded,
+                  color: accentColor,
+                  size: 28,
+                ),
               ),
-          ],
+              const SizedBox(height: 10),
+              Text(
+                person.name,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: accentColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  person.gender,
+                  style: TextStyle(
+                    color: accentColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              if (person.description.trim().isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  person.description,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade700,
+                    height: 1.3,
+                  ),
+                ),
+              ],
+              if (person.birthDate != null || person.deathDate != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '${person.birthDate?.year ?? '?'} – ${person.deathDate?.year ?? (person.birthDate == null ? '?' : 'nay')}',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -482,69 +584,106 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
   Widget _buildTree() {
     final rows = _generationRows();
     if (rows.isEmpty) {
-      return const Center(
-        child: Text('Chưa có dữ liệu gia phả. Nhấn “Thêm thành viên” để bắt đầu.'),
+      return Center(
+        child: Container(
+          margin: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.family_restroom_rounded, size: 48, color: Colors.indigo.shade300),
+              const SizedBox(height: 12),
+              const Text(
+                'Chưa có dữ liệu gia phả',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Nhấn “Thêm thành viên” để bắt đầu xây dựng cây gia đình của bạn.',
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
       );
     }
 
-    return InteractiveViewer(
-      constrained: false,
-      boundaryMargin: const EdgeInsets.all(100),
-      minScale: 0.25,
-      maxScale: 2.5,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          const rowHeight = 170.0;
-          final rowCenters = <List<Offset>>[];
-          final rowTopOffsets = <double>[];
-          double currentTop = 20;
+    return Container(
+      margin: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.7),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: InteractiveViewer(
+        constrained: false,
+        boundaryMargin: const EdgeInsets.all(120),
+        minScale: 0.25,
+        maxScale: 2.0,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            const rowHeight = 210.0;
+            final rowCenters = <List<Offset>>[];
+            final rowTopOffsets = <double>[];
+            double currentTop = 24;
 
-          for (final row in rows) {
-            rowCenters.add(_rowCenters(row, constraints.maxWidth));
-            rowTopOffsets.add(currentTop);
-            currentTop += rowHeight;
-          }
+            for (final row in rows) {
+              rowCenters.add(_rowCenters(row, constraints.maxWidth));
+              rowTopOffsets.add(currentTop);
+              currentTop += rowHeight;
+            }
 
-          final totalHeight = currentTop + 20;
+            final totalHeight = currentTop + 24;
 
-          return SizedBox(
-            width: constraints.maxWidth,
-            height: totalHeight,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: CustomPaint(
-                    painter: _FamilyConnectionPainter(
-                      rows: rows,
-                      rowCenters: rowCenters,
-                      rowTopOffsets: rowTopOffsets,
+            return SizedBox(
+              width: constraints.maxWidth,
+              height: totalHeight,
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: CustomPaint(
+                      painter: _FamilyConnectionPainter(
+                        rows: rows,
+                        rowCenters: rowCenters,
+                        rowTopOffsets: rowTopOffsets,
+                      ),
                     ),
                   ),
-                ),
-                ...List.generate(rows.length, (rowIndex) {
-                  final row = rows[rowIndex];
-                  return Positioned(
-                    top: rowTopOffsets[rowIndex],
-                    left: 0,
-                    right: 0,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: row
-                          .map(
-                            (person) => Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              child: _personCard(person),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  );
-                }),
-              ],
-            ),
-          );
-        },
+                  ...List.generate(rows.length, (rowIndex) {
+                    final row = rows[rowIndex];
+                    return Positioned(
+                      top: rowTopOffsets[rowIndex],
+                      left: 0,
+                      right: 0,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: row
+                            .map(
+                              (person) => Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                child: _personCard(person),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            );
+          },
+        ),
       ),
     );
   }
@@ -596,31 +735,62 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Tổng số thành viên: ${people.length}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(width: 20),
-                      const Expanded(
-                        child: Text('Bấm vào thành viên để sửa thông tin'),
-                      ),
-                    ],
-                  ),
+          : Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.indigo.shade50,
+                    Colors.white,
+                  ],
                 ),
-                const Divider(height: 1),
-                Expanded(
-                  child: Container(
-                    color: Colors.grey.shade100,
+              ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: _summaryCard(
+                            label: 'Thành viên',
+                            value: '${people.length}',
+                            icon: Icons.groups_rounded,
+                            color: Colors.indigo,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _summaryCard(
+                            label: 'Thế hệ',
+                            value: '${_generationRows().length}',
+                            icon: Icons.account_tree_rounded,
+                            color: Colors.deepPurple,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Bấm vào mỗi thành viên để xem và chỉnh sửa chi tiết.',
+                        style: TextStyle(
+                          color: Colors.grey.shade700,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Expanded(
                     child: _buildTree(),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _loading ? null : _addPerson,
