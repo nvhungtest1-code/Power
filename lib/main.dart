@@ -126,6 +126,9 @@ class _GenealogyAppState extends State<GenealogyApp> {
       value == null ? null : DateTime(value.year, value.month, value.day);
 
   Future<void> _addPerson() async {
+          _messengerKey.currentState?.showSnackBar(
+        const SnackBar(content: Text('Đã thêm thành viên.')),
+      );
     final person = await _navigatorKey.currentState?.push<Person>(
       MaterialPageRoute(
         builder: (_) => AddPersonScreen(people: List<Person>.unmodifiable(people), nextId: _nextId),
