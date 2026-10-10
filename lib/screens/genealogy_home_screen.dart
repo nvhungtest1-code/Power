@@ -409,6 +409,20 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
     );
   }
 
+  List<Offset> _rowCenters(List<Person> row, double availableWidth) {
+    if (row.isEmpty) return const <Offset>[];
+
+    const cardWidth = 190.0;
+    const gap = 24.0;
+    final totalWidth = row.length * cardWidth + (row.length - 1) * gap;
+    final startX = (availableWidth - totalWidth) / 2;
+
+    return List.generate(row.length, (index) {
+      final x = startX + index * (cardWidth + gap) + (cardWidth / 2);
+      return Offset(x, 100);
+    });
+  }
+
   Widget _buildTree() {
     final rows = _generationRows();
     if (rows.isEmpty) {
@@ -429,30 +443,46 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
           children: [
             for (int rowIndex = 0; rowIndex < rows.length; rowIndex++) ...[
               Padding(
-                padding: const EdgeInsets.only(bottom: 20),
-                child: Column(
-                  children: [
-                    Text(
-                      'Dòng ${rowIndex + 1}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.indigo,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: rows[rowIndex]
-                          .map(
-                            (person) => Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12),
-                              child: _personCard(person),
+                padding: const EdgeInsets.only(bottom: 28),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final row = rows[rowIndex];
+                    final currentCenters = _rowCenters(row, constraints.maxWidth);
+                    final previousRow = rowIndex == 0 ? <Person>[] : rows[rowIndex - 1];
+                    final previousCenters = rowIndex == 0
+                        ? const []
+                        : _rowCenters(previousRow, constraints.maxWidth);
+
+                    return SizedBox(
+                      height: 170,
+                      child: Stack(
+                        children: [
+                          Positioned.fill(
+                            child: CustomPaint(
+                              painter: _FamilyConnectionPainter(
+                                row: row,
+                                previousRow: previousRow,
+                                currentCenters: currentCenters,
+                                previousCenters: previousCenters,
+                              ),
                             ),
-                          )
-                          .toList(),
-                    ),
-                  ],
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: row
+                                .map(
+                                  (person) => Padding(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                                    child: _personCard(person),
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
               ),
             ],
@@ -460,6 +490,57 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
         ),
       ),
     );
+  }
+
+  class _FamilyConnectionPainter extends CustomPainter {
+    const _FamilyConnectionPainter({
+      required this.row,
+      required this.previousRow,
+      required this.currentCenters,
+      required this.previousCenters,
+    });
+
+    final List<Person> row;
+    final List<Person> previousRow;
+    final List<Offset> currentCenters;
+    final List<Offset> previousCenters;
+
+    @override
+    void paint(Canvas canvas, Size size) {
+      if (previousRow.isEmpty) return;
+
+      final paint = Paint()
+        ..color = Colors.indigo.withOpacity(0.55)
+        ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke;
+
+      for (var i = 0; i < row.length; i++) {
+        final person = row[i];
+        final parentId = person.fatherId ?? person.motherId;
+        if (parentId == null) continue;
+
+        final parentIndex = previousRow.indexWhere((p) => p.id == parentId);
+        if (parentIndex < 0) continue;
+
+        final parentCenter = previousCenters[parentIndex];
+        final childCenter = currentCenters[i];
+        final midY = 82.0;
+
+        final parentAnchor = Offset(parentCenter.dx, size.height - 10);
+        final childAnchor = Offset(childCenter.dx, 10);
+
+        canvas.drawLine(parentAnchor, Offset(parentCenter.dx, midY), paint);
+        canvas.drawLine(Offset(parentCenter.dx, midY), Offset(childCenter.dx, midY), paint);
+        canvas.drawLine(Offset(childCenter.dx, midY), childAnchor, paint);
+      }
+    }
+
+    @override
+    bool shouldRepaint(covariant _FamilyConnectionPainter oldDelegate) =>
+        oldDelegate.row != row ||
+        oldDelegate.previousRow != previousRow ||
+        oldDelegate.currentCenters != currentCenters ||
+        oldDelegate.previousCenters != previousCenters;
   }
 
   @override
