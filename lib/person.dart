@@ -1,69 +1,61 @@
-
 class Person {
   final int id;
   String name;
   String gender;
-
-  // Quan hệ gia đình
   int? fatherId;
   int? motherId;
   List<int> spouseIds;
-
-  // Ngày tháng
   DateTime? birthDate;
   DateTime? deathDate;
 
-  // Tương thích với code hiện tại đang sử dụng parentId
-  int? get parentId => fatherId;
-
-  set parentId(int? value) {
-    fatherId = value;
-  }
+  int? get parentId => fatherId ?? motherId;
+  set parentId(int? value) => fatherId = value;
 
   Person({
     required this.id,
     required this.name,
     required this.gender,
     int? parentId,
-    int? fatherId,
+    this.fatherId,
     this.motherId,
     List<int>? spouseIds,
     this.birthDate,
     this.deathDate,
-  })  : fatherId = fatherId ?? parentId,
-        spouseIds = spouseIds ?? [];
-
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'gender': gender,
-      'fatherId': fatherId,
-      'motherId': motherId,
-      'spouseIds': spouseIds,
-      'birthDate': birthDate?.toIso8601String(),
-      'deathDate': deathDate?.toIso8601String(),
-    };
+  }) : spouseIds = spouseIds ?? [] {
+    fatherId ??= parentId;
   }
 
-  factory Person.fromJson(Map<String, dynamic> json) {
-    return Person(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      gender: json['gender'] as String,
-      fatherId: json['fatherId'] as int? ??
-          json['parentId'] as int?,
-      motherId: json['motherId'] as int?,
-      spouseIds: (json['spouseIds'] as List<dynamic>?)
-              ?.map((id) => id as int)
-              .toList() ??
-          [],
-      birthDate: json['birthDate'] == null
-          ? null
-          : DateTime.parse(json['birthDate'] as String),
-      deathDate: json['deathDate'] == null
-          ? null
-          : DateTime.parse(json['deathDate'] as String),
-    );
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'gender': gender,
+        'fatherId': fatherId,
+        'motherId': motherId,
+        'spouseIds': spouseIds,
+        'birthDate': birthDate?.toIso8601String(),
+        'deathDate': deathDate?.toIso8601String(),
+      };
+
+  factory Person.fromJson(Map<String, dynamic> json) => Person(
+        id: (json['id'] as num).toInt(),
+        name: json['name'] as String? ?? json['fullName'] as String? ?? '',
+        gender: json['gender'] as String? ?? 'unknown',
+        fatherId: (json['fatherId'] ?? json['parentId']) is num
+            ? ((json['fatherId'] ?? json['parentId']) as num).toInt()
+            : null,
+        motherId: json['motherId'] is num
+            ? (json['motherId'] as num).toInt()
+            : null,
+        spouseIds: (json['spouseIds'] as List<dynamic>? ?? [])
+            .whereType<num>()
+            .map((id) => id.toInt())
+            .toList(),
+        birthDate: _parseDate(json['birthDate']),
+        deathDate: _parseDate(json['deathDate']),
+      );
+
+  static DateTime? _parseDate(dynamic value) {
+    if (value is! String || value.isEmpty) return null;
+    return DateTime.tryParse(value);
   }
 }
