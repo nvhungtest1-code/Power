@@ -317,6 +317,23 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
     return cache[person.id]!;
   }
 
+  List<Person> _orderRowByFamily(List<Person> row) {
+    final ordered = List<Person>.from(row);
+    ordered.sort((a, b) {
+      final aParentId = a.fatherId ?? a.motherId ?? a.id;
+      final bParentId = b.fatherId ?? b.motherId ?? b.id;
+
+      final parentCompare = aParentId.compareTo(bParentId);
+      if (parentCompare != 0) return parentCompare;
+
+      final nameCompare = a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      if (nameCompare != 0) return nameCompare;
+
+      return a.id.compareTo(b.id);
+    });
+    return ordered;
+  }
+
   List<List<Person>> _generationRows() {
     final map = <int, List<Person>>{};
     final cache = <int, int>{};
@@ -328,8 +345,7 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
 
     final rows = map.keys.toList()..sort();
     return rows.map((generation) {
-      final row = List<Person>.from(map[generation]!);
-      row.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+      final row = _orderRowByFamily(List<Person>.from(map[generation]!));
       return row;
     }).toList();
   }
@@ -582,6 +598,20 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
     });
   }
 
+  double _treeCanvasWidth(List<List<Person>> rows, double viewportWidth) {
+    if (rows.isEmpty) return viewportWidth.isFinite ? viewportWidth : 1200.0;
+
+    const cardWidth = 190.0;
+    const gap = 24.0;
+    const padding = 80.0;
+    final widestRowWidth = rows
+        .map((row) => row.length * cardWidth + (row.length - 1) * gap)
+        .reduce((a, b) => a > b ? a : b);
+    final desiredWidth = widestRowWidth + padding;
+    final safeViewport = viewportWidth.isFinite ? viewportWidth : 1200.0;
+    return desiredWidth > safeViewport ? desiredWidth : safeViewport;
+  }
+
   Widget _buildTree() {
     final rows = _generationRows();
     if (rows.isEmpty) {
@@ -633,9 +663,10 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
         maxScale: 2.0,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final safeWidth = constraints.maxWidth.isFinite
+            final viewportWidth = constraints.maxWidth.isFinite
                 ? constraints.maxWidth
                 : MediaQuery.sizeOf(context).width;
+            final canvasWidth = _treeCanvasWidth(rows, viewportWidth);
 
             const rowHeight = 210.0;
             final rowCenters = <List<Offset>>[];
@@ -643,7 +674,7 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
             double currentTop = 24;
 
             for (final row in rows) {
-              rowCenters.add(_rowCenters(row, safeWidth));
+              rowCenters.add(_rowCenters(row, canvasWidth));
               rowTopOffsets.add(currentTop);
               currentTop += rowHeight;
             }
@@ -651,7 +682,7 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
             final totalHeight = currentTop + 24;
 
             return SizedBox(
-              width: safeWidth,
+              width: canvasWidth,
               height: totalHeight,
               child: Stack(
                 children: [
