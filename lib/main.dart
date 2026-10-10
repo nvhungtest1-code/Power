@@ -81,7 +81,7 @@ class GenealogyApp extends StatefulWidget {
 class _GenealogyAppState extends State<GenealogyApp> {
   static const _storageKey = 'power_genealogy_members_v1';
   final List<Person> people = [];
-  bool _loading = true;
+  bool _loading = false;
   int _nextId = 1;
 
   @override
