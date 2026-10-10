@@ -191,6 +191,13 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
     );
   }
 
+  Future<void> _addSiblingPerson(Person currentPerson) async {
+    await _addPerson(
+      defaultFatherId: currentPerson.fatherId,
+      defaultMotherId: currentPerson.motherId,
+    );
+  }
+
   Future<void> _addParentPerson(Person child, {required String parentType}) async {
     final targetGender = parentType == 'father' ? 'Nam' : 'Nữ';
     final defaultFatherId = parentType == 'father' ? null : child.fatherId;
@@ -232,6 +239,7 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
           onAddChild: _addChildPerson,
           onAddParent: _addParentPerson,
           onAddSpouse: _addSpousePerson,
+          onAddSibling: _addSiblingPerson,
         ),
       ),
     );

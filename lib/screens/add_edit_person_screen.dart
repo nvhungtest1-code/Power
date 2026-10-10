@@ -163,6 +163,13 @@ class _AddPersonScreenState extends State<AddPersonScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: _saving ? null : () => Navigator.of(context).pop(),
         ),
+        actions: [
+          TextButton.icon(
+            onPressed: _saving ? null : _save,
+            icon: const Icon(Icons.save),
+            label: Text(_isEditing ? 'Lưu' : 'Thêm'),
+          ),
+        ],
       ),
       body: SafeArea(
         child: Center(
@@ -314,15 +321,6 @@ class _AddPersonScreenState extends State<AddPersonScreen> {
                       ),
                     ),
                   const SizedBox(height: 28),
-                  FilledButton.icon(
-                    onPressed: _saving ? null : _save,
-                    icon: const Icon(Icons.save),
-                    label: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Text(_isEditing ? 'Lưu thay đổi' : 'Lưu thành viên'),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
                   OutlinedButton(
                     onPressed: _saving ? null : () => Navigator.of(context).pop(),
                     child: const Text('Hủy'),

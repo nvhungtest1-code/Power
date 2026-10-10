@@ -13,6 +13,7 @@ class PersonDetailScreen extends StatelessWidget {
     required this.onAddChild,
     required this.onAddParent,
     required this.onAddSpouse,
+    required this.onAddSibling,
   });
 
   final Person person;
@@ -23,6 +24,7 @@ class PersonDetailScreen extends StatelessWidget {
   final Future<void> Function(Person person, {required String gender}) onAddChild;
   final Future<void> Function(Person person, {required String parentType}) onAddParent;
   final Future<void> Function(Person person) onAddSpouse;
+  final Future<void> Function(Person person) onAddSibling;
 
   Person? _personById(int? id) {
     if (id == null) return null;
@@ -42,6 +44,15 @@ class PersonDetailScreen extends StatelessWidget {
 
   List<Person> _children() => people
       .where((p) => p.fatherId == person.id || p.motherId == person.id)
+      .toList();
+
+  List<Person> _siblings() => people
+      .where(
+        (p) =>
+            p.id != person.id &&
+            ((person.fatherId != null && p.fatherId == person.fatherId) ||
+                (person.motherId != null && p.motherId == person.motherId)),
+      )
       .toList();
 
   bool get _isMale => person.gender == 'Nam' || person.gender == 'male';
@@ -100,6 +111,14 @@ class PersonDetailScreen extends StatelessWidget {
       if (context.mounted) {
         Navigator.of(context).pop();
       }
+      return;
+    }
+
+    if (value == 'add-sibling') {
+      await onAddSibling(person);
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
     }
   }
 
@@ -109,6 +128,7 @@ class PersonDetailScreen extends StatelessWidget {
     final mother = _mother();
     final spouses = _spouses();
     final children = _children();
+    final siblings = _siblings();
 
     return Scaffold(
       appBar: AppBar(
@@ -125,6 +145,7 @@ class PersonDetailScreen extends StatelessWidget {
               const PopupMenuItem(value: 'add-son', child: Text('Thêm con trai')),
               const PopupMenuItem(value: 'add-daughter', child: Text('Thêm con gái')),
               const PopupMenuItem(value: 'add-spouse', child: Text('Thêm vợ/chồng')),
+              const PopupMenuItem(value: 'add-sibling', child: Text('Thêm anh/chị/em')),
             ],
           ),
         ],
@@ -180,6 +201,26 @@ class PersonDetailScreen extends StatelessWidget {
                 person: mother,
                 onOpenPerson: onOpenPerson,
               ),
+              const SizedBox(height: 20),
+              const Text(
+                'Anh chị em',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              if (siblings.isEmpty)
+                const Text('Chưa có thông tin anh chị em.')
+              else
+                ...siblings.map(
+                  (member) => _PersonRelationTile(
+                    label: member.gender == 'Nam' || member.gender == 'male'
+                        ? 'Anh/Em trai'
+                        : member.gender == 'Nữ' || member.gender == 'female'
+                            ? 'Chị/Em gái'
+                            : 'Anh/Chị/Em',
+                    person: member,
+                    onOpenPerson: onOpenPerson,
+                  ),
+                ),
               const SizedBox(height: 20),
               const Text(
                 'Vợ / chồng',
