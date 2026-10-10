@@ -20,6 +20,7 @@ class PersonDetailScreen extends StatelessWidget {
   final Future<void> Function(Person person) onEditPerson;
   final Future<bool> Function(Person person) onDeletePerson;
   final Future<void> Function(Person person, {required String gender}) onAddChild;
+  final Future<void> Function(Person person, {required String parentType}) onAddParent;
   final Future<void> Function(Person person) onAddSpouse;
 
   Person? _personById(int? id) {
@@ -77,6 +78,22 @@ class PersonDetailScreen extends StatelessWidget {
       return;
     }
 
+    if (value == 'add-father') {
+      await onAddParent(person, parentType: 'father');
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+      return;
+    }
+
+    if (value == 'add-mother') {
+      await onAddParent(person, parentType: 'mother');
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+      return;
+    }
+
     if (value == 'add-spouse') {
       await onAddSpouse(person);
       if (context.mounted) {
@@ -102,6 +119,8 @@ class PersonDetailScreen extends StatelessWidget {
             itemBuilder: (context) => [
               const PopupMenuItem(value: 'edit', child: Text('Sửa thông tin')),
               const PopupMenuItem(value: 'delete', child: Text('Xóa thành viên')),
+              const PopupMenuItem(value: 'add-father', child: Text('Thêm bố')),
+              const PopupMenuItem(value: 'add-mother', child: Text('Thêm mẹ')),
               const PopupMenuItem(value: 'add-son', child: Text('Thêm con trai')),
               const PopupMenuItem(value: 'add-daughter', child: Text('Thêm con gái')),
               const PopupMenuItem(value: 'add-spouse', child: Text('Thêm vợ/chồng')),

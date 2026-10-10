@@ -135,6 +135,35 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
     );
   }
 
+  Future<void> _addParentPerson(Person child, {required String parentType}) async {
+    final targetGender = parentType == 'father' ? 'Nam' : 'Nữ';
+    final defaultFatherId = parentType == 'father' ? null : child.fatherId;
+    final defaultMotherId = parentType == 'mother' ? null : child.motherId;
+
+    await _addPerson(
+      initialGender: targetGender,
+      defaultFatherId: defaultFatherId,
+      defaultMotherId: defaultMotherId,
+    );
+
+    if (!mounted) return;
+
+    final latestPerson = people.isEmpty ? null : people.last;
+    if (latestPerson == null) return;
+
+    setState(() {
+      if (parentType == 'father') {
+        final childPerson = people.firstWhere((p) => p.id == child.id, orElse: () => child);
+        childPerson.fatherId = latestPerson.id;
+      } else {
+        final childPerson = people.firstWhere((p) => p.id == child.id, orElse: () => child);
+        childPerson.motherId = latestPerson.id;
+      }
+    });
+
+    await _savePeople();
+  }
+
   Future<void> _openDetailScreen(Person person) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -145,6 +174,7 @@ class _GenealogyHomeScreenState extends State<GenealogyHomeScreen> {
           onEditPerson: _editPerson,
           onDeletePerson: _deletePerson,
           onAddChild: _addChildPerson,
+          onAddParent: _addParentPerson,
           onAddSpouse: _addSpousePerson,
         ),
       ),
